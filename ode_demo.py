@@ -48,11 +48,9 @@ def get_batch():
     batch_y = torch.stack([true_y[s + i] for i in range(args.batch_time)], dim=0)  # (T, M, D)
     return batch_y0.to(device), batch_t.to(device), batch_y.to(device)
 
-
 def makedirs(dirname):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-
 
 if args.viz:
     makedirs('png')
