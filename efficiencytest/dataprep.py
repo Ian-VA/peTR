@@ -85,7 +85,7 @@ def get_train():
 
 def get_data():
     device = torch.device('cuda')
-    X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(df_features, 'Value', 0.2)
+    X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(df_features, 'value', 0.2)
     scaler = MinMaxScaler()
     X_train_arr = scaler.fit_transform(X_train)
     X_val_arr = scaler.transform(X_val)
