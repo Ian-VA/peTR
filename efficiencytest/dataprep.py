@@ -7,19 +7,13 @@ from torch.utils.data import TensorDataset, DataLoader
 import torch
 
 df = pd.read_csv("electricdata.csv")
-df = df.set_index(['DATE'])
+df = df.set_index(['Date'])
 df.index = pd.to_datetime(df.index)
 
 if not df.index.is_monotonic:
     df = df.sort_index()
 
-df = df.rename(columns={'Date': 'Value'})
-
-df_features = (
-         df
-         .assign(month = df.index.month)
-         .assign(day = df.index.day)
-        )
+df_features = (df.assign(month = df.index.month))
 
 def generate_cyclical_features(df, col_name, period, start_num=0):
     kwargs = {
@@ -40,7 +34,7 @@ def plot(title):
 def lag(df, n_lags):
     df_n = df.copy()
     for n in range(1, n_lags + 1):
-        df_n[f"lag{n}"] = df_n["value"].shift(n)
+        df_n[f"lag{n}"] = df_n["Value"].shift(n)
     df_n = df_n.iloc[n_lags:]
     return df_n
 
@@ -57,11 +51,11 @@ def train_val_test_split(df, target_col, test_ratio):
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 def get_train():
-    x_train, _, _, _, _, _ = train_val_test_split(df_features, 'value', 0.2)
+    x_train, _, _, _, _, _ = train_val_test_split(df_features, 'Value', 0.2)
     return x_train
 
 def get_data():
-    X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(df_features, 'value', 0.2)
+    X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(df_features, 'Value', 0.2)
     scaler = MinMaxScaler()
     X_train_arr = scaler.fit_transform(X_train)
     X_val_arr = scaler.transform(X_val)
@@ -88,4 +82,3 @@ def get_data():
     test_loader = DataLoader(test, batch_size=batch_size, shuffle=False, drop_last=True)
 
     return train_loader, val_loader, test_loader
-
