@@ -47,7 +47,7 @@ class Optimization:
         return predictions, values
 
     def train(self, train_loader, val_loader, batch_size=64, n_epochs=50, n_features=1):
-        model_path = f'models/{self.model}_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+        model_path = f'{self.model}_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
 
         for epoch in range(1, n_epochs + 1):
             batch_losses = []
@@ -98,7 +98,6 @@ learning_rate = 1e-3
 weight_decay = 1e-6
 train_loader, val_loader, test_loader = get_data()
 
-
 model_params = {'input_dim': input_dim,
                 'hidden_dim' : hidden_dim,
                 'layer_dim' : layer_dim,
@@ -108,7 +107,11 @@ model = RNN(input_dim, hidden_dim, layer_dim, output_dim)
 loss_fn = nn.MSELoss(reduction="mean")
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
+if torch.cuda.is_available():
+    model.cuda()
+
 opt = Optimization(model=model, loss_fn=loss_fn, optimizer=optimizer)
+
 opt.train(train_loader, val_loader, batch_size=batch_size, n_epochs=n_epochs, n_features=input_dim)
 opt.plot_losses()
 

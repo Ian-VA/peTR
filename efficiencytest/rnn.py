@@ -12,12 +12,12 @@ class RNN(nn.Module):
         self.hidden_dim = hidden_dim
         self.layer_dim = layer_dim
         self.output_dim = output_dim
-        self.rnn = nn.RNN(input_dim, hidden_dim, layer_dim, batch_first=True, non_linearity="relu")
+        self.rnn = nn.RNN(input_dim, hidden_dim, layer_dim, batch_first=True)
 
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        h0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim))
+        h0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(torch.device('cuda')))
         out, hn = self.rnn(x, h0)
 
         out = self.fc(out[:, -1, :])
