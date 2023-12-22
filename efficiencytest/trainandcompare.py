@@ -9,6 +9,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import torch.cuda.memory as memory
 import pickle
+from lstm import LSTMNet
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -73,10 +74,8 @@ class Optimization:
                 validation_loss = np.mean(batch_val_losses)
                 self.val_losses.append(validation_loss)
 
-            if (epoch <= 10) | (epoch % 50 == 0):
-                print(
-                    f"[{epoch}/{n_epochs}] Training loss: {training_loss:.4f}\t Validation loss: {validation_loss:.4f}"
-                )
+            
+            print(f"[{epoch}/{n_epochs}] Training loss: {training_loss:.4f}\t Validation loss: {validation_loss:.4f}")
 
         torch.save(self.model.state_dict(), model_path)
 
@@ -105,14 +104,14 @@ model_params = {'input_dim': input_dim,
                 'layer_dim' : layer_dim,
                 'output_dim' : output_dim,
                 'dropout_prob' : dropout}
-model = RNN(input_dim, hidden_dim, layer_dim, output_dim)
+model = LSTMNet(input_dim, hidden_dim, layer_dim)
 loss_fn = nn.MSELoss(reduction="mean")
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 if torch.cuda.is_available():
     model.cuda()
 
-memory._record_memory_history("all")
+memory._record_memory_history()
 
 opt = Optimization(model=model, loss_fn=loss_fn, optimizer=optimizer)
 
