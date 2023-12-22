@@ -7,6 +7,8 @@ from datetime import datetime
 import numpy as np
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import torch.cuda.memory as memory
+import pickle
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -110,9 +112,17 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight
 if torch.cuda.is_available():
     model.cuda()
 
+memory._record_memory_history("all")
+
 opt = Optimization(model=model, loss_fn=loss_fn, optimizer=optimizer)
 
 opt.train(train_loader, val_loader, batch_size=batch_size, n_epochs=n_epochs, n_features=input_dim)
+
+snapshot = memory._snapshot()
+
+with open(f"snap.pickle", "wb") as f:
+    pickle.dump(snapshot, f)
+
 opt.plot_losses()
 
 predictions, values = opt.evaluate(test_loader, batch_size=1, n_features=input_dim)
