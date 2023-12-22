@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 import torch.cuda.memory as memory
 import pickle
 from lstm import LSTMNet
+from CfC import CfCModel
+from ncps.torch import CfC
+from ncps.wirings import AutoNCP
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -49,7 +52,7 @@ class Optimization:
 
         return predictions, values
 
-    def train(self, train_loader, val_loader, batch_size=64, n_epochs=50, n_features=1):
+    def train(self, train_loader, val_loader, batch_size=64, n_epochs=10, n_features=1):
         model_path = f'{self.model}_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
 
         for epoch in range(1, n_epochs + 1):
@@ -104,7 +107,10 @@ model_params = {'input_dim': input_dim,
                 'layer_dim' : layer_dim,
                 'output_dim' : output_dim,
                 'dropout_prob' : dropout}
-model = LSTMNet(input_dim, hidden_dim, layer_dim)
+
+wiring = AutoNCP(50, output_dim)
+model = CfC(input_dim, wiring)
+
 loss_fn = nn.MSELoss(reduction="mean")
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
@@ -115,7 +121,7 @@ memory._record_memory_history()
 
 opt = Optimization(model=model, loss_fn=loss_fn, optimizer=optimizer)
 
-opt.train(train_loader, val_loader, batch_size=batch_size, n_epochs=n_epochs, n_features=input_dim)
+opt.train(train_loader, val_loader, batch_size=batch_size, n_epochs=10, n_features=input_dim)
 
 snapshot = memory._snapshot()
 
