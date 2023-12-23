@@ -27,9 +27,9 @@ class Optimization:
     def train_step(self, x, y):
         self.model.train()
 
-        yhat = self.model(x)
-
-        loss = self.loss_fn(y, yhat)
+        yhat, _ = self.model.forward(x)
+        yhat = yhat.view_as(y)
+        loss = self.loss_fn(yhat, y)
 
         loss.backward()
 
@@ -46,7 +46,11 @@ class Optimization:
                 x_test = x_test.view([batch_size, -1, n_features]).to(device)
                 y_test = y_test.to(device)
                 self.model.eval()
-                yhat = self.model(x_test)
+
+                yhat, _ = self.model(x_test)
+
+                yhat = yhat.view_as(y_test)
+
                 predictions.append(yhat.to(device).detach().numpy())
                 values.append(y_test.to(device).detach().numpy())
 
@@ -71,16 +75,17 @@ class Optimization:
                     x_val = x_val.view([batch_size, -1, n_features]).to(device)
                     y_val = y_val.to(device)
                     self.model.eval()
-                    yhat = self.model(x_val)
-                    val_loss = self.loss_fn(y_val, yhat).item()
+                    yhat, _ = self.model(x_val)
+
+                    yhat = yhat.view_as(y_val)
+
+                    val_loss = self.loss_fn(yhat, y_val).item()
                     batch_val_losses.append(val_loss)
                 validation_loss = np.mean(batch_val_losses)
                 self.val_losses.append(validation_loss)
 
             
             print(f"[{epoch}/{n_epochs}] Training loss: {training_loss:.4f}\t Validation loss: {validation_loss:.4f}")
-
-        torch.save(self.model.state_dict(), model_path)
 
     def plot_losses(self):
         plt.plot(self.train_losses, label="Training loss")
@@ -98,7 +103,7 @@ layer_dim = 3
 batch_size = 64
 dropout = 0.2
 n_epochs = 100
-learning_rate = 1e-3
+learning_rate = .01
 weight_decay = 1e-6
 train_loader, val_loader, test_loader = get_data()
 
@@ -109,7 +114,7 @@ model_params = {'input_dim': input_dim,
                 'dropout_prob' : dropout}
 
 wiring = AutoNCP(50, output_dim)
-model = CfC(input_dim, wiring)
+model = CfC(input_dim, wiring, batch_first=True)
 
 loss_fn = nn.MSELoss(reduction="mean")
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)

@@ -12,7 +12,7 @@ class CfCModel(nn.Module):
         self.linear = nn.Linear(hidden_size, 1)
 
     def forward(self, x):
-        h0 = Variable(torch.zeros(3, 64, self.hidden_size).cuda())
+        h0 = Variable(torch.zeros(self.input_size, 64, self.hidden_size).cuda())
         output, hn = self.cfc_model(x, h0)
 
-        return self.linear(output)
+        return self.linear(hn[-1])
