@@ -13,7 +13,7 @@ from lstm import LSTMNet
 from CfC import CfCModel
 from ncps.torch import CfC
 from ncps.wirings import AutoNCP
-
+import seaborn as sns
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Optimization:
@@ -57,7 +57,8 @@ class Optimization:
         return predictions, values
 
     def train(self, train_loader, val_loader, batch_size=64, n_epochs=10, n_features=1):
-        model_path = f'{self.model}_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+        model_path = "cfc_save"
+        #memory._record_memory_history()
 
         for epoch in range(1, n_epochs + 1):
             batch_losses = []
@@ -75,7 +76,7 @@ class Optimization:
                     x_val = x_val.view([batch_size, -1, n_features]).to(device)
                     y_val = y_val.to(device)
                     self.model.eval()
-                    yhat, _ = self.model(x_val)
+                    yhat, _ = self.model.forward(x_val)
 
                     yhat = yhat.view_as(y_val)
 
@@ -84,12 +85,24 @@ class Optimization:
                 validation_loss = np.mean(batch_val_losses)
                 self.val_losses.append(validation_loss)
 
+            #snap = memory._snapshot()
+        
+            #with open("snapcfc1.pickle", "wb") as f: pickle.dump(snap, f)
+
+            #torch.save(model.state_dict(), model_path)
+
             
             print(f"[{epoch}/{n_epochs}] Training loss: {training_loss:.4f}\t Validation loss: {validation_loss:.4f}")
 
     def plot_losses(self):
         plt.plot(self.train_losses, label="Training loss")
         plt.plot(self.val_losses, label="Validation loss")
+
+        torch.save(self.train_losses, "traininglosscfc1.pt")
+        torch.save(self.val_losses, "vallosscfc1.pt")
+
+        print("saved losses")
+
         plt.legend()
         plt.title("Losses")
         plt.show()
@@ -102,7 +115,7 @@ hidden_dim = 64
 layer_dim = 3
 batch_size = 64
 dropout = 0.2
-n_epochs = 100
+n_epochs = 50
 learning_rate = .01
 weight_decay = 1e-6
 train_loader, val_loader, test_loader = get_data()
@@ -113,25 +126,29 @@ model_params = {'input_dim': input_dim,
                 'output_dim' : output_dim,
                 'dropout_prob' : dropout}
 
-wiring = AutoNCP(50, output_dim)
+wiring = AutoNCP(30, output_dim)
+
 model = CfC(input_dim, wiring, batch_first=True)
 
+# for drawing CfC network diagram
+"""
+sns.set_style("white")
+plt.figure(figsize=(6, 4))
+legend_handles = wiring.draw_graph(draw_labels=False, neuron_colors={"command": "tab:cyan"})
+plt.legend(handles=legend_handles, loc="upper center", bbox_to_anchor=(1, 1))
+sns.despine(left=True, bottom=True)
+plt.tight_layout()
+plt.show() 
+"""
 loss_fn = nn.MSELoss(reduction="mean")
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 if torch.cuda.is_available():
     model.cuda()
 
-memory._record_memory_history()
-
 opt = Optimization(model=model, loss_fn=loss_fn, optimizer=optimizer)
 
-opt.train(train_loader, val_loader, batch_size=batch_size, n_epochs=10, n_features=input_dim)
-
-snapshot = memory._snapshot()
-
-with open(f"snap.pickle", "wb") as f:
-    pickle.dump(snapshot, f)
+opt.train(train_loader, val_loader, batch_size=batch_size, n_epochs=50, n_features=input_dim)
 
 opt.plot_losses()
 

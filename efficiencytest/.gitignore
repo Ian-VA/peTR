@@ -1,1 +1,12 @@
 snap.pickle
+snap.pickle
+snapcfc1.pickle
+vallosscfc.pt
+vallosslstm.pt
+trianinglosscfc1.pt
+traininglosscfc1.pt
+__pycache__/
+rnn_save.pt
+listm_save.pt
+cfc_save
+snaprnn.pickle
